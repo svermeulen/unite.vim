@@ -78,7 +78,7 @@ let s:kind.action_table.vimfiler__move = {
       \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__move.func(candidates) "{{{
-  if !unite#util#input_yesno('Really move files?')
+  if g:vimfiler_confirm_on_move && !unite#util#input_yesno('Really move files?')
     echo 'Canceled.'
     return
   endif
