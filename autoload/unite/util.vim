@@ -88,11 +88,8 @@ endfunction
 function! unite#util#strwidthpart_reverse(...)
   return call(s:get_prelude().strwidthpart_reverse, a:000)
 endfunction
-function! unite#util#wcswidth(...)
-  return call(s:get_prelude().wcswidth, a:000)
-endfunction
-function! unite#util#wcswidth(...)
-  return call(s:get_prelude().wcswidth, a:000)
+function! unite#util#wcswidth(string)
+  return strwidth(a:string)
 endfunction
 function! unite#util#is_win(...)
   echoerr 'unite#util#is_win() is deprecated. use unite#util#is_windows() instead.'
@@ -279,9 +276,9 @@ function! unite#util#is_cmdwin() "{{{
   return bufname('%') ==# '[Command Line]'
 endfunction"}}}
 function! s:buflisted(bufnr) "{{{
-  return getbufvar(a:bufnr, '&bufhidden') == '' &&
-        \ (exists('t:unite_buffer_dictionary') ?
-        \   has_key(t:unite_buffer_dictionary, a:bufnr) && bufloaded(a:bufnr) :
+  return (getbufvar(a:bufnr, '&bufhidden') == '' || buflisted(a:bufnr)) &&
+        \ (exists('t:tabpagebuffer') ?
+        \   has_key(t:tabpagebuffer, a:bufnr) && bufloaded(a:bufnr) :
         \   bufloaded(a:bufnr))
 endfunction"}}}
 
@@ -339,14 +336,14 @@ function! unite#util#convert2list(expr) "{{{
 endfunction"}}}
 
 function! unite#util#truncate_wrap(str, max, footer_width, separator) "{{{
-  let width = unite#util#wcswidth(a:str)
+  let width = strwidth(a:str)
   if width <= a:max
     return unite#util#truncate(a:str, a:max)
   elseif &l:wrap
     return a:str
   endif
 
-  let header_width = a:max - unite#util#wcswidth(a:separator) - a:footer_width
+  let header_width = a:max - strwidth(a:separator) - a:footer_width
   return unite#util#strwidthpart(a:str, header_width) . a:separator
         \ . unite#util#strwidthpart_reverse(a:str, a:footer_width)
 endfunction"}}}
@@ -382,7 +379,9 @@ function! unite#util#is_sudo() "{{{
 endfunction"}}}
 
 function! unite#util#lcd(dir) "{{{
-  execute 'lcd' fnameescape(a:dir)
+  if isdirectory(a:dir)
+    execute 'lcd' fnameescape(a:dir)
+  endif
 endfunction"}}}
 
 let &cpo = s:save_cpo

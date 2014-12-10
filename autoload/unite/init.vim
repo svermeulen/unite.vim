@@ -40,14 +40,18 @@ function! unite#init#_context(context, ...) "{{{
   let default_context = extend(copy(unite#variables#default_context()),
         \ unite#custom#get_profile('default', 'context'))
 
+  if len(source_names) == 1
+    " Overwrite source context by profile.
+    call extend(default_context, unite#custom#get_profile(
+          \ 'source/' . source_names[0], 'context'))
+  endif
+
   let profile_name = get(a:context, 'profile_name',
-        \ ((len(source_names) == 1 && !has_key(a:context, 'buffer_name')) ?
-        \    'source/' . source_names[0] :
-        \    get(a:context, 'buffer_name', 'default')))
+        \    get(a:context, 'buffer_name', 'default'))
   if profile_name !=# 'default'
-    " Overwrite default_context by profile context.
-    call extend(default_context,
-          \ unite#custom#get_profile(profile_name, 'context'))
+    " Overwrite context by profile.
+    call extend(default_context, unite#custom#get_profile(
+          \ profile_name, 'context'))
   endif
 
   let context = extend(default_context, a:context)
@@ -268,14 +272,12 @@ function! unite#init#_current_unite(sources, context) "{{{
         \ 'default' : context.buffer_name
   let unite.profile_name =
         \ (context.profile_name != '') ? context.profile_name :
-        \ (len(sources) == 1) ? 'source/' . sources[0].name :
         \ unite.buffer_name
   let unite.prev_bufnr = bufnr('%')
   let unite.prev_winnr = winnr()
   let unite.prev_line = 0
   let unite.update_time_save = &updatetime
-  let unite.statusline = "*unite* : %{unite#get_status_string()} "
-        \."%=%{line('.')}/%{(b:unite.candidates_len+b:unite.prompt_linenr)}"
+  let unite.statusline = unite#view#_get_status_string(unite)
 
   " Create new buffer name.
   let postfix = unite#helper#get_postfix(
@@ -307,6 +309,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.candidates_pos = 0
   let unite.candidates = []
   let unite.candidates_len = 0
+  let unite.candidate_cursor = -1
   let unite.max_source_candidates = 0
   let unite.is_multi_line = 0
   let unite.args = unite#helper#get_source_args(a:sources)
@@ -316,7 +319,6 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.disabled_max_candidates = 0
   let unite.cursor_line_time = reltime()
   let unite.match_id = 11
-  let unite.is_resume = 0
 
   if context.here
     let context.winheight = winheight(0) - winline() + 1
@@ -756,7 +758,7 @@ function! unite#init#_sources(...) "{{{
       call unite#print_error(v:throwpoint)
       call unite#print_error(v:exception)
       call unite#print_error(
-            \ '[unite.vim] Error occured in source initialization!')
+            \ '[unite.vim] Error occurred in source initialization!')
       call unite#print_error(
             \ '[unite.vim] Source name is ' . source.name)
     endtry
