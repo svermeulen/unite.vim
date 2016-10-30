@@ -1,10 +1,10 @@
 unite
-3637f4f
+1a385f58a58571e4cb6309831ad4d7260180bc71
 
 Prelude
 Data.List
-System.Cache
+System.Cache.Deprecated
 Data.String
-System.File
 Vim.Message
 Process
+System.File
